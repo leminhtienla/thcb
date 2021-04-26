@@ -4,8 +4,8 @@
 #define teeth 1   //khai báo số răng cảm biến tốc độ
 
 unsigned long loops_count = 0;  //biến đếm số vòng lặp loops/s
-unsigned long pre_ms = 0, cur_ms = 0; //
-unsigned int bg = 0, etcV = 0;
+unsigned long next_ms = 0, cur_ms = 0; //
+unsigned int bg = 0, etc_mV = 0;
 float pulse_ms = 0, rps = 0, rpm = 0, etcT = 0;
 volatile unsigned long isr_pre_ms = 0, isr_cur_ms = 0;
 
@@ -17,8 +17,8 @@ int ETCV_table[2][10] = {
 void setup() {
   // put your setup code here, to run once:
   pinMode(pinSPD,INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(pinSPD), pulse_handler, RISING);
-  pre_ms = 1000;
+  attachInterrupt(digitalPinToInterrupt(pinSPD), pulse_handler, FALLING);
+  next_ms = 1000;
   Serial.begin(9600);
   Serial.println("UNO Ready");
 }
@@ -32,10 +32,10 @@ void loop() {
   // put your main code here, to run repeatedly:
   cur_ms = millis();
   loops_count++;
-  if (cur_ms >= pre_ms) {
+  if (cur_ms >= next_ms) {
     cal();
     printSerial();
-    pre_ms += 1000;
+    next_ms += 1000;
     loops_count = 0;
   } else {}
 }
@@ -46,7 +46,7 @@ int bgA0 = analogRead(pinBG);
 int etc = analogRead(pinETC);
     etcV = map(etc,0,1023,0,5000);
 byte x = 1;
-    etcT = map(etcV,ETCV_table[x-1][1],ETCV_table[x][1],ETCV_table[x-1][0],ETCV_table[x][0]);
+    etcT = map(etcV,ETCV_table[1][x-1],ETCV_table[1][x],ETCV_table[0][x-1],ETCV_table[0][x]);
     if ((micros()-isr_cur_ms) >= 1e6) {
       pulse_ms = 0;
     } else {
