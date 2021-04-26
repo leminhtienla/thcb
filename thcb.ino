@@ -1,17 +1,17 @@
-#define pinSPD 2
-#define pinBG A0
-#define pinETC A1
-#define teeth 1
+#define pinSPD 2  //khai báo chân cảm biến tốc độ
+#define pinBG A0  //khai báo chân cảm biến bướm ga
+#define pinETC A1 //khai báo chân cảm biến nhiệt độ động cơ
+#define teeth 1   //khai báo số răng cảm biến tốc độ
 
-unsigned long loops_count = 0;
-unsigned long pre_ms = 0, cur_ms = 0;
-unsigned long bg = 0, etcV = 0;
+unsigned long loops_count = 0;  //biến đếm số vòng lặp loops/s
+unsigned long pre_ms = 0, cur_ms = 0; //
+unsigned int bg = 0, etcV = 0;
 float pulse_ms = 0, rps = 0, rpm = 0, etcT = 0;
 volatile unsigned long isr_pre_ms = 0, isr_cur_ms = 0;
 
 int ETCV_table[2][10] = {
-  {120,110,100,90,  80,  70,  60,  50,  40,  30},
-  {300,400,500,1000,1500,2000,2500,3000,3500,4000}
+  {120,110,100,90,  80,  70,  60,  50,  40,  30},  //nhiệt độ (độ C)
+  {300,400,500,1000,1500,2000,2500,3000,3500,4000}  //điện áp (mmV)
   };
 
 void setup() {
@@ -21,6 +21,11 @@ void setup() {
   pre_ms = 1000;
   Serial.begin(9600);
   Serial.println("UNO Ready");
+}
+
+void pulse_handler() {
+  isr_pre_ms = isr_cur_ms;
+  isr_cur_ms = micros();
 }
 
 void loop() {
@@ -33,11 +38,6 @@ void loop() {
     pre_ms += 1000;
     loops_count = 0;
   } else {}
-}
-
-void pulse_handler() {
-  isr_pre_ms = isr_cur_ms;
-  isr_cur_ms = micros();
 }
 
 void cal() {
