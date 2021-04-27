@@ -4,6 +4,6 @@ Tín hiệu cảm biến tốc độ
 
 ![Signal](https://github.com/leminhtienla/thcb/blob/main/pics/IMG_20210426_090602.jpg)
 
-Tham khảo
+Mạch tham khảo
 
 ![Signal](https://github.com/leminhtienla/thcb/blob/main/pics/IMG_20210422_134147.jpg)
