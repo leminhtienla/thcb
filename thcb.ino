@@ -2,7 +2,7 @@
 #define pinBG A0  //khai báo chân cảm biến bướm ga
 #define pinETC A1 //khai báo chân cảm biến nhiệt độ động cơ
 #define teeth 1   //khai báo số răng cảm biến tốc độ
-#define TBL_X 10
+#define TBL_X 31
 #define TBL_Y 2
 
 unsigned long loops_count = 0;  //biến đếm số vòng lặp loops/s
@@ -12,8 +12,8 @@ float pulse_ms = 0, rps = 0, rpm = 0, etcT = 0;
 volatile unsigned long isr_pre_ms = 0, isr_cur_ms = 0;
 
 int ETCV_table[TBL_Y][TBL_X] = {
-  {120,110,100,90,  80,  70,  60,  50,  40,  30},  //nhiệt độ (độ C)
-  {300,400,500,1000,1500,2000,2500,3000,3500,4000}  //điện áp (mmV)
+  {120,115,110,105,100,95,90,85,80,75,70,65,60,55,50,45,40,35,30,25,20,15,10,5,0,-5,-10,-15,-20,-25,-30},  //nhiệt độ (độ C)
+  {324,381,448,524,612,713,826,954,1097,1254,1425,1610,1807,2013,2227,2445,2663,2879,3089,3291,3482,3661,3825,3975,4110,4231,4338,4433,4515,4586,4648}  //điện áp (mmV)
   };
 
 void setup() {
