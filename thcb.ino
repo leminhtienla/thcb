@@ -1,16 +1,21 @@
+#include "average.h" // Khai báo thư viện tính trung bình
+//
 #define pinSPD 2  //khai báo chân cảm biến tốc độ
 #define pinBG A0  //khai báo chân cảm biến bướm ga
 #define pinETC A1 //khai báo chân cảm biến nhiệt độ động cơ
 #define teeth 1   //khai báo số răng cảm biến tốc độ
 #define TBL_X 31
 #define TBL_Y 2
-#define etcR 1050.0 //Ohm
+#define etcR 1020.0 //Ohm
 #define serial_ms 500
-
+//
+Average<float> aveBG(5);
+Average<float> aveETC(10);
+//
 //unsigned long loops_count = 0;  //biến đếm số vòng lặp loops/s
 unsigned long next_ms = 0, cur_ms = 0; //
 unsigned int bg = 0;
-float pulse_ms = 0, rps = 0, rpm = 0, etcT = 0;
+float pulse_ms = 0, rps = 0, rpm = 0, etcT = 0, A0_mV  = 0, A1_mV = 0;;
 volatile unsigned long isr_pre_ms = 0, isr_cur_ms = 0;
 uint16_t Vcc = 0;
 
@@ -22,6 +27,7 @@ float ETCV_table[TBL_Y][TBL_X] = {
 
 void setup() {
   // put your setup code here, to run once:
+  analogReference(DEFAULT);
   pinMode(pinSPD,INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(pinSPD), pulse_handler, FALLING);
   next_ms = serial_ms;
@@ -38,6 +44,8 @@ void loop() {
   // put your main code here, to run repeatedly:
   cur_ms = millis();
   //loops_count++;
+  aveBG.push(analogRead(pinBG));
+  aveETC.push(analogRead(pinETC));
   if (cur_ms >= next_ms) {
     cal();
     printSerial();
@@ -48,13 +56,10 @@ void loop() {
 
 void cal() {
     Vcc = readVcc();
-int bgA0 = analogRead(pinBG);
+float bgA0 = aveBG.mean();
     bg = map(bgA0,0,1023,0,1000);
-float etcA1 = analogRead(pinETC);
-int etc_mV = map(etcA1,0,1023,0,Vcc);
+float etcA1 = aveETC.mean();
 float etc_Ohm = etcR*etcA1/(1023.0-etcA1);
-//float etc_Ohm = etcR*etc_mV/(Vcc-etc_mV);
-    //Serial.println(etc_Ohm);
     if ((etc_Ohm >= ETCV_table[1][0]) && (etc_Ohm <= ETCV_table[1][TBL_X-1])) {
       int x = 0;
       for (x = 0; x < TBL_X; x++) {
@@ -73,6 +78,8 @@ float etc_Ohm = etcR*etcA1/(1023.0-etcA1);
     }
     rps = 1000/pulse_ms/teeth;
     rpm = 60*rps;  
+    A0_mV = map(bgA0,0,1023,0,Vcc);
+    A1_mV = map(etcA1,0,1023,0,Vcc);
 }
 
 void printSerial() {
@@ -81,12 +88,16 @@ void printSerial() {
     //Serial.print("\tloops:");
     //Serial.print(loops_count);
     Serial.print("\tVcc:");
-    Serial.print(Vcc);
+    Serial.print(Vcc/1000.0,3);
+    Serial.print("\tA0:");
+    Serial.print(A0_mV/1000.0,3);
+    Serial.print("\tA1:");
+    Serial.print(A1_mV/1000.0,3);
     Serial.print("\tbg:");
     Serial.print(bg/10.0,1);
     Serial.print("%\tetcT:");
     Serial.print(etcT/10.0,1);
-    Serial.print("\tspd_ms:");
+    Serial.print("\tpulse_ms:");
     Serial.print(pulse_ms,3);
     Serial.print("\trps:");
     Serial.print(rps,3);
