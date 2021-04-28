@@ -12,8 +12,8 @@ float pulse_ms = 0, rps = 0, rpm = 0, etcT = 0;
 volatile unsigned long isr_pre_ms = 0, isr_cur_ms = 0;
 
 int ETCV_table[TBL_Y][TBL_X] = {
-  {120,115,110,105,100,95,90,85,80,75,70,65,60,55,50,45,40,35,30,25,20,15,10,5,0,-5,-10,-15,-20,-25,-30},  //nhiệt độ (độ C)
-  {324,381,448,524,612,713,826,954,1097,1254,1425,1610,1807,2013,2227,2445,2663,2879,3089,3291,3482,3661,3825,3975,4110,4231,4338,4433,4515,4586,4648}  //điện áp (mmV)
+  {1200,1150,1100,1050,1000,950,900,850,800,750,700,650,600,550,500,450,400,350,300,250,200,150,100,50,0,-50,-100,-150,-200,-250,-300},  //nhiệt độ (độ C)
+  {298,351,412,482,563,656,760,878,1009,1154,1311,1481,1662,1852,2049,2249,2450,2649,2842,3028,3204,3368,3519,3657,3782,3893,3991,4078,4154,4219,4276}  //điện áp (mmV)
   };
 
 void setup() {
@@ -44,7 +44,7 @@ void loop() {
 
 void cal() {
 int bgA0 = analogRead(pinBG);
-    bg = map(bgA0,0,1023,0,100);
+    bg = map(bgA0,0,1023,0,1000);
 int etcA1 = analogRead(pinETC);
     etc_mV = map(etcA1,0,1023,0,5000);
     if ((etc_mV >= ETCV_table[1][0]) && (etc_mV <= ETCV_table[1][TBL_X-1])) {
@@ -73,9 +73,9 @@ void printSerial() {
     Serial.print("\tloops:");
     Serial.print(loops_count);
     Serial.print("\tbg:");
-    Serial.print(bg);
+    Serial.print(bg/10.0,1);
     Serial.print("%\tetcT:");
-    Serial.print(etcT,2);
+    Serial.print(etcT/10.0,1);
     Serial.print("\tspd_ms:");
     Serial.print(pulse_ms,3);
     Serial.print("\trps:");
