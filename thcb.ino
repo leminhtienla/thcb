@@ -4,23 +4,27 @@
 #define teeth 1   //khai báo số răng cảm biến tốc độ
 #define TBL_X 31
 #define TBL_Y 2
+#define etcR 1050.0 //Ohm
+#define serial_ms 500
 
-unsigned long loops_count = 0;  //biến đếm số vòng lặp loops/s
+//unsigned long loops_count = 0;  //biến đếm số vòng lặp loops/s
 unsigned long next_ms = 0, cur_ms = 0; //
-unsigned int bg = 0, etc_mV = 0;
+unsigned int bg = 0;
 float pulse_ms = 0, rps = 0, rpm = 0, etcT = 0;
 volatile unsigned long isr_pre_ms = 0, isr_cur_ms = 0;
+uint16_t Vcc = 0;
 
-int ETCV_table[TBL_Y][TBL_X] = {
+float ETCV_table[TBL_Y][TBL_X] = {
   {1200,1150,1100,1050,1000,950,900,850,800,750,700,650,600,550,500,450,400,350,300,250,200,150,100,50,0,-50,-100,-150,-200,-250,-300},  //nhiệt độ (độ C)
-  {298,351,412,482,563,656,760,878,1009,1154,1311,1481,1662,1852,2049,2249,2450,2649,2842,3028,3204,3368,3519,3657,3782,3893,3991,4078,4154,4219,4276}  //điện áp (mmV)
+  //{84.2,99.4,117.2,138.2,163.0,192.2,226.7,267.4,315.4,371.9,438.7,517.3,610.2,719.6,848.7,1001.0,1180.5,1392.3,1642.1,1936.6,2284.1,2693.8,3177.1,3747.0,4419.2,5212.0,6147.0,7249.7,8550.2,10084.1,11893.1}
+  {69,83,98,117,140,166,198,236,281,335,399,475,566,674,803,957,1140,1357,1617,1926,2295,2734,3256,3879,4621,5505,6558,7812,9306,11085,13205}  //điện trở (Ohm)
   };
 
 void setup() {
   // put your setup code here, to run once:
   pinMode(pinSPD,INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(pinSPD), pulse_handler, FALLING);
-  next_ms = 1000;
+  next_ms = serial_ms;
   Serial.begin(9600);
   Serial.println("UNO Ready");
 }
@@ -33,28 +37,32 @@ void pulse_handler() {
 void loop() {
   // put your main code here, to run repeatedly:
   cur_ms = millis();
-  loops_count++;
+  //loops_count++;
   if (cur_ms >= next_ms) {
     cal();
     printSerial();
-    next_ms += 1000;
-    loops_count = 0;
+    next_ms += serial_ms;
+    //loops_count = 0;
   } else {}
 }
 
 void cal() {
+    Vcc = readVcc();
 int bgA0 = analogRead(pinBG);
     bg = map(bgA0,0,1023,0,1000);
-int etcA1 = analogRead(pinETC);
-    etc_mV = map(etcA1,0,1023,0,5000);
-    if ((etc_mV >= ETCV_table[1][0]) && (etc_mV <= ETCV_table[1][TBL_X-1])) {
+float etcA1 = analogRead(pinETC);
+int etc_mV = map(etcA1,0,1023,0,Vcc);
+float etc_Ohm = etcR*etcA1/(1023.0-etcA1);
+//float etc_Ohm = etcR*etc_mV/(Vcc-etc_mV);
+    //Serial.println(etc_Ohm);
+    if ((etc_Ohm >= ETCV_table[1][0]) && (etc_Ohm <= ETCV_table[1][TBL_X-1])) {
       int x = 0;
       for (x = 0; x < TBL_X; x++) {
-        if (ETCV_table[1][x] >= etc_mV) {
+        if (ETCV_table[1][x] >= etc_Ohm) {
           break;
         } else {}
       }
-      etcT = map(etc_mV,ETCV_table[1][x-1],ETCV_table[1][x],ETCV_table[0][x-1],ETCV_table[0][x]);
+      etcT = map(etc_Ohm,ETCV_table[1][x-1],ETCV_table[1][x],ETCV_table[0][x-1],ETCV_table[0][x]);
     } else {
       etcT = 0;
     }  
@@ -69,9 +77,11 @@ int etcA1 = analogRead(pinETC);
 
 void printSerial() {
     Serial.print("ms:");
-    Serial.print(cur_ms/1000);
-    Serial.print("\tloops:");
-    Serial.print(loops_count);
+    Serial.print(cur_ms/1000.0,1);
+    //Serial.print("\tloops:");
+    //Serial.print(loops_count);
+    Serial.print("\tVcc:");
+    Serial.print(Vcc);
     Serial.print("\tbg:");
     Serial.print(bg/10.0,1);
     Serial.print("%\tetcT:");
@@ -83,4 +93,17 @@ void printSerial() {
     Serial.print("\trpm:");
     Serial.print(rpm,3);
     Serial.println();
+}
+
+uint16_t readVcc() {
+  uint16_t result;
+  // Read 1.1V reference against AVcc
+  ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+  delay(2); // Wait for Vref to settle
+  ADCSRA |= _BV(ADSC); // Convert
+  while (bit_is_set(ADCSRA, ADSC));
+  result = ADCL;
+  result |= ADCH << 8;
+  result = 1126400L / result; // Back-calculate AVcc in mV
+  return result;
 }
