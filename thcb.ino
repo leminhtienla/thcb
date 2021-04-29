@@ -4,10 +4,10 @@
 #define pinBG A0  //khai báo chân cảm biến bướm ga
 #define pinETC A1 //khai báo chân cảm biến nhiệt độ động cơ
 #define teeth 1   //khai báo số răng cảm biến tốc độ
-#define TBL_X 31
-#define TBL_Y 2
 #define etcR 1020.0 //Ohm
 #define serial_ms 500
+#define TBL_X 31
+#define TBL_Y 2
 //
 Average<float> aveBG(5);
 Average<float> aveETC(10);
@@ -20,8 +20,7 @@ volatile unsigned long isr_pre_ms = 0, isr_cur_ms = 0;
 uint16_t Vcc = 0;
 
 float ETCV_table[TBL_Y][TBL_X] = {
-  {1200,1150,1100,1050,1000,950,900,850,800,750,700,650,600,550,500,450,400,350,300,250,200,150,100,50,0,-50,-100,-150,-200,-250,-300},  //nhiệt độ (độ C)
-  //{84.2,99.4,117.2,138.2,163.0,192.2,226.7,267.4,315.4,371.9,438.7,517.3,610.2,719.6,848.7,1001.0,1180.5,1392.3,1642.1,1936.6,2284.1,2693.8,3177.1,3747.0,4419.2,5212.0,6147.0,7249.7,8550.2,10084.1,11893.1}
+  {1200,1150,1100,1050,1000,950,900,850,800,750,700,650,600,550,500,450,400,350,300,250,200,150,100,50,0,-50,-100,-150,-200,-250,-300},  //nhiệt độ (độ C) X 10
   {69,83,98,117,140,166,198,236,281,335,399,475,566,674,803,957,1140,1357,1617,1926,2295,2734,3256,3879,4621,5505,6558,7812,9306,11085,13205}  //điện trở (Ohm)
   };
 
@@ -89,9 +88,9 @@ void printSerial() {
     //Serial.print(loops_count);
     Serial.print("\tVcc:");
     Serial.print(Vcc/1000.0,3);
-    Serial.print("\tA0:");
+    Serial.print("|A0:");
     Serial.print(A0_mV/1000.0,3);
-    Serial.print("\tA1:");
+    Serial.print("|A1:");
     Serial.print(A1_mV/1000.0,3);
     Serial.print("\tbg:");
     Serial.print(bg/10.0,1);
